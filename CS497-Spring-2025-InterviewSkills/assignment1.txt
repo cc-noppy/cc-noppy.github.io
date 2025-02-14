@@ -1,0 +1,198 @@
+1) Using python
+
+def two_sum(nums, target):
+    num_map = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in num_map:
+            return [num_map[complement], i]
+        num_map[num] = i
+    return []
+
+Just like the hints states, this uses dictionaries (hash maps), where the keys are numbers and the corresponding value in the pair is the indices. For each number we check if target - num is already in the num_map, and if it is, we return the indices. If not, we store the number in the num_map for look up.
+
+Time complexity: O(n) since it only iterated through the elements once. This makes it better than the brute force method of O(n^2).
+
+---------------------------------------------------------
+
+2) Using Python. We need to solve this using O(logn) time.
+
+def search_range(nums, target):
+    def find_first(nums, target):
+        left, right = 0, len(nums) - 1
+        first = -1
+        while left <= right:
+            mid = (left + right) // 2
+            if nums[mid] >= target:  
+                right = mid - 1
+            else:
+                left = mid + 1
+            if nums[mid] == target:
+                first = mid
+        return first
+
+    def find_last(nums, target):
+        left, right = 0, len(nums) - 1
+        last = -1
+        while left <= right:
+            mid = (left + right) // 2
+            if nums[mid] <= target: 
+                left = mid + 1
+            else:
+                right = mid - 1
+            if nums[mid] == target:
+                last = mid
+        return last
+
+    first = find_first(nums, target)
+    last = find_last(nums, target)
+    return [first, last]
+
+This one is looooong. The solution for this one uses binary search, where we search for the target's first occurrence by moving left when nums[mid] >= target. When searching for the last occurrence, we move right when nums[mid] <= target.
+
+Time complexity: O(2logn) ---> O(logn). This is because each binary search runs in O(logn).
+
+---------------------------------------
+
+3) Using Python. We need to solve this in O(log(m+n)) time.
+
+def find_median_sorted_arrays(nums1, nums2):
+    # We need to make sure nums1 is the smaller array
+    if len(nums1) > len(nums2):
+        nums1, nums2 = nums2, nums1
+
+    x, y = len(nums1), len(nums2)
+    left, right = 0, x
+
+    while left <= right:
+        partition_x = (left + right) // 2
+        partition_y = (x + y + 1) // 2 - partition_x
+
+        max_left_x = float('-inf') if partition_x == 0 else nums1[partition_x - 1]
+        min_right_x = float('inf') if partition_x == x else nums1[partition_x]
+
+        max_left_y = float('-inf') if partition_y == 0 else nums2[partition_y - 1]
+        min_right_y = float('inf') if partition_y == y else nums2[partition_y]
+
+        if max_left_x <= min_right_y and max_left_y <= min_right_x:
+            if (x + y) % 2 == 0:
+                return (max(max_left_x, max_left_y) + min(min_right_x, min_right_y)) / 2.0
+            else:
+                return max(max_left_x, max_left_y)
+
+        elif max_left_x > min_right_y:
+            right = partition_x - 1
+        else:
+            left = partition_x + 1
+
+To make this O(log(m+n)) time rather than O(m+n) time, we need to use binary search, akin to problem 2. First, we need find a partition by doing a binary search on the smaller array (nums1). This comes in the form of:
+
+max(left part of nums1,left part of nums2) <= min(right part of nums1,right part of nums2)
+
+From there, we find the median. If the total length is odd, then we return max_left. Otherwise if the length is even, we return the average of max_left and min_right. Since we only perform constant-time operations inside the loop, the overall complexity is O(log(m+n)), making it optimal. From there, we don't have the merge them, a process that would make our time complexity take a huge hit.
+
+The binary search in full runs in O(log(min(m, n))).
+
+-----------------------------------------
+
+4) Done in Python. This is wholly a sliding window problem.
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def remove_nth_from_end(head, n):
+    dummy = ListNode(0, head) 
+    slow, fast = dummy, dummy
+
+    for _ in range(n + 1):
+        fast = fast.next
+
+    while fast:
+        slow, fast = slow.next, fast.next
+
+    slow.next = slow.next.next
+
+    return dummy.next  # Return new head
+
+# Helper function (list -> linked list)
+def list_to_linked_list(lst):
+    dummy = ListNode(0)
+    current = dummy
+    for val in lst:
+        current.next = ListNode(val)
+        current = current.next
+    return dummy.next
+
+# Helper function (linked list -> list)
+def linked_list_to_list(head):
+    result = []
+    while head:
+        result.append(head.val)
+        head = head.next
+    return result
+
+I utilized helper functions to make the code more cleaner and readable rather than it being one whole soggy mess. I use two pointers, fast and slow, to process information. I need to keep a gap between the two pointers lest the sliding window method is moot, so I love fast n+1 steps ahead. We traverse both pointers until fast reaches the end.
+
+From here, the time complexity is O(n) since it's only a single pass through the list.
+
+
+-----------------------------------
+
+5) Using python. This utilizes the min-heap method to always extract the smallest element across all linked lists.
+
+from heapq import heappush, heappop
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+    def __lt__(self, other):
+        return self.val < other.val
+
+def merge_k_sorted_lists(lists):
+    min_heap = []
+    
+    for l in lists:
+        if l:
+            heappush(min_heap, l)
+
+    dummy = ListNode(0)
+    current = dummy
+
+    while min_heap:
+        smallest = heappop(min_heap)
+        current.next = smallest
+        current = current.next
+
+        if smallest.next:
+            heappush(min_heap, smallest.next)
+
+    return dummy.next
+
+def list_to_linked_list(lst):
+    dummy = ListNode(0)
+    current = dummy
+    for val in lst:
+        current.next = ListNode(val)
+        current = current.next
+    return dummy.next
+
+def linked_list_to_list(head):
+    result = []
+    while head:
+        result.append(head.val)
+        head = head.next
+    return result
+
+
+Min-Heap (priority queue) allows for us to extract the smallest element. Since each list is already sorted, the smallest element must be one of the current head nodes of these lists. When writing this, I used a dummy node to simplify the merging process, since it serves as a placeholder to avoid handling really goofy edge cases while setting the head of the final list. Here's the pseudocode process:
+
+- extract the smalled node from the heap using heap pop
+- attact it to the result list
+- move the pointer forward
+- repeat until all nodes are merged.
+
+From here, the time complexity is O(nlogk) where n = total number of nodes in all lists, and k = the number of linked lists.

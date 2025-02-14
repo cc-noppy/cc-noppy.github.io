@@ -1,0 +1,182 @@
+1) Uses Python. This uses the Boyer-Moore Voting Algorithm
+
+def majority_element(nums):
+    candidate, count = None, 0
+
+    for num in nums:
+        if count == 0:  # reset candidate!!
+            candidate = num
+        count += (1 if num == candidate else -1)
+
+    return candidate
+
+
+If an element is the majority, it appears more then n/2 (floored) times. This means that if we maintain a counter while travelling through the array while increasing for a candidate and decreasing for a non-candidate, the last candidate must be the majority. 
+
+Time complexity: Since there is only a single pass through the array the time complexity is O(n)
+
+-----------------------
+
+2) Uses Python. Quickselect Algorithm
+
+import random
+
+def quickselect(nums, left, right, k):
+    pivot_n = partition(nums, left, right)
+
+    if pivot_n == k:
+        return nums[pivot_n]
+    elif pivot_n > k:
+        return quickselect(nums, left, pivot_n - 1, k)
+    else:
+        return quickselect(nums, pivot_n + 1, right, k)
+
+def partition(nums, left, right):
+    pivot = nums[right]
+    i = left
+    for j in range(left, right):
+        if nums[j] >= pivot: 
+            nums[i], nums[j] = nums[j], nums[i]
+            i += 1
+    nums[i], nums[right] = nums[right], nums[i]
+    return i 
+
+def find_kth_largest(nums, k):
+    k_index = k - 1 
+    return quickselect(nums, 0, len(nums) - 1, k_index)
+
+pivot_n is namely the pivot index. Here's the pseudo code of the process:
+- we choose a pivot (or just the last element)
+- we partition the array so that elements larger than the pivot are put on the left, and the smaller ones are put on the right. 
+- we determine the pivot's final position via these steps:
+	- if it's at len(nums) - k, return it
+	- if it's too large, recurse on left
+	- if it's too small, recures on right
+
+With an average time complexity, it's O(n)
+Worse time complexity is O(n^2) if the partitioning is unbalanced. (That's why random is there to mitigate this.
+
+The quickselect algo is best for large arrays, but has a fairly unstable performance time depending on factors regarding pivot placement.
+
+
+-----------------------------------------------
+
+3) Using python. This uses bucket sort!
+
+def maximum_gap(nums):
+    if len(nums) < 2:
+        return 0
+
+    min_val, max_val = min(nums), max(nums)
+    if min_val == max_val:
+        return 0 
+
+    n = len(nums)
+    bucket_size = max(1, (max_val - min_val) // (n - 1))
+    bucket_count = (max_val - min_val) // bucket_size + 1
+
+    buckets = [[float('inf'), float('-inf')] for _ in range(bucket_count)]
+
+    for num in nums:
+        index = (num - min_val) // bucket_size
+        buckets[index][0] = min(buckets[index][0], num)
+        buckets[index][1] = max(buckets[index][1], num)
+
+    max_gap = 0
+    prev_max = min_val
+
+    for min_bucket, max_bucket in buckets:
+        if min_bucket == float('inf'):
+            continue 
+        max_gap = max(max_gap, min_bucket - prev_max)
+        prev_max = max_bucket 
+
+    return max_gap
+
+Bucket sort is played out like this:
+- if the array is fewer than two, then we just return 0
+- we find the max and min vals in the array
+- then we determine the bucket size:
+	- bucket_size = max(1, (max_val - min_val) // (n - 1))
+	- bucket_count = (max_val - min_val) // bucket_size + 1
+- we then place the elements into the bucket, while tracking the max and min the each bucket.
+- then we compute the max gap between the buckets.
+
+Time Complexity:
+With this, our time complexity is O(n), since each element is placed in a bucket and processed once.
+
+-------------------------------------------
+
+4) Using Python (greedy + stack)
+
+def remove_duplicate_letters(s):
+    last_occurrence = {char: i for i, char in enumerate(s)}  
+    stack = [] 
+    seen = set()  
+
+    for i, char in enumerate(s):
+        if char in seen:
+            continue  # skip if already added
+
+        while stack and stack[-1] > char and last_occurrence[stack[-1]] > i:
+            seen.remove(stack.pop())
+
+        stack.append(char)
+        seen.add(char)
+
+    return "".join(stack)
+
+Here are the steps in pseudocode as per the usual!
+- we count the last occurences of each character
+- then we iterated through the string with these rules:
+	- if the character is in the stack, we skip it
+	- if the stack is not empty and the top element appears again, we pop it from the stack
+	- we push the current char onto the stack
+- finally, we return the stack as a string.
+
+Time complexity: O(n) since each char is pushed and popped at most once.
+
+
+-----------------------------------------------
+
+5) Using python, another sliding window problem!
+
+from collections import deque
+
+def shortestSubarray(nums, k):
+    n = len(nums)
+    prefix_sum = [0] * (n + 1)  # Prefix sum array, starting with 0
+
+    for i in range(n):
+        prefix_sum[i + 1] = prefix_sum[i] + nums[i]
+
+    min_len = float('inf')
+    dq = deque()
+
+    for j in range(n + 1):
+        while dq and prefix_sum[j] - prefix_sum[dq[0]] >= k:
+            min_len = min(min_len, j - dq.popleft())
+
+        while dq and prefix_sum[j] <= prefix_sum[dq[-1]]:
+            dq.pop()
+
+        dq.append(j)
+
+    return min_len if min_len != float('inf') else -1
+
+
+With this problem, we want a prefix sum and an establishment of sliding window + deques. The prefix sum is where prefix[i] represents the sum of elements from the start of the array up to index i. Wholly, our goal is to find a subarray with a sum of at least k.
+
+Steps:
+- compute prefix sums for the array
+- use a monotonic deque to store the indices of the prefix sums:
+	- pop from the back if the current prefix sum is smaller than the last one
+	- pop from the front when we find a proper subarray and update the minimum length
+- for each element, check if the difference between the current prefix sum and the min valid prefix sum is  k:
+	- if it is, update the minimum subarray length
+- finally, return the min length or -1 if there is no subarray that satisfies the problem.
+
+Time complexity: O(n) since each element is processed once and each index is pushed and popped from the deque at most once
+
+
+
