@@ -1,0 +1,136 @@
+Francis Lorenz Rosas
+Assignment 4
+
+1) Uses Python. Uses a dictionary to count the frequency of each element in nums
+
+from collections import Counter
+import heapq
+
+def topKFrequent(nums, k):
+    freq = Counter(nums)  
+    return [x for x, _ in heapq.nlargest(k, freq.items(), key=lambda x: x[1])]
+
+Although deceptively simple, I used a hash map for frequency counting, a min-heap to track the top k elements, and heap operations to insert elements into the heap while maintaining the heap size of k. Thus the time analysis is three pieces:
+
+Using Counter(nums) = O(n)
+Heap Operations = O(n log k)
+Final extractions = O(k log k)
+
+Overall, this turns out to be O(n+n log k) = O(n log k), which is better than O(n log n)
+
+
+2) Uses Python. Two-pointer approach!
+
+import bisect
+
+def findClosestElements(arr, k, x):
+    left = bisect.bisect_left(arr, x) - 1
+    right = left + 1
+    
+    while k > 0:
+        if left < 0:
+            right += 1
+        elif right >= len(arr):
+            left -= 1
+        elif abs(arr[left] - x) <= abs(arr[right] - x):
+            left -= 1
+        else:
+            right += 1
+        k -= 1
+    
+    return arr[left+1:right]
+
+We use two-pointer expansion and binary search to solve this problem. Once we fully do both, we sort the result in full, putting the whole array in ascending order. Since arr is sorted, we can use binary search to locate where x should be inserted.
+
+The time complexity is as follows:
+Binary search = O(lon n)
+Two pointers = O(k)
+
+Overall this comes out to be O(log n + k). This is better than O(n), which would require a brute force.
+
+
+3) Uses Python. This utilizes a priority queue.
+
+import heapq
+
+def peekTopK(heap, k):
+    if k > len(heap):
+        return sorted(heap, reverse=True)
+    
+    result = []
+    max_heap = [(-heap[0], 0)]  # Store negative values for max-heap behavior
+    heapq.heapify(max_heap)
+    
+    while k > 0 and max_heap:
+        val, idx = heapq.heappop(max_heap)
+        result.append(-val)
+        k -= 1
+        
+        left_child = 2 * idx + 1
+        right_child = 2 * idx + 2
+        
+        if left_child < len(heap):
+            heapq.heappush(max_heap, (-heap[left_child], left_child))
+        if right_child < len(heap):
+            heapq.heappush(max_heap, (-heap[right_child], right_child))
+    
+    return result
+
+This one is a long one! We utilize a max heap binary tree where the parent node is always greater than its child nodes and the largest element is at the root. Since the heap already has a order, we can extract the k largest elements without modifying it the dang thing.
+
+Since the heap operations takes O(log k), and the extraction is O(k log k), the overall complexity is O(k log k)
+
+
+
+4) Uses Python. Uses a prefix sum array and a monotonic deque.
+
+from collections import deque
+
+def shortestSubarray(nums, k):
+    prefix_sum = [0]
+    for num in nums:
+        prefix_sum.append(prefix_sum[-1] + num)
+    
+    dq = deque()
+    min_len = float('inf')
+    
+    for i, curr_sum in enumerate(prefix_sum):
+        while dq and curr_sum - prefix_sum[dq[0]] >= k:
+            min_len = min(min_len, i - dq.popleft())
+        while dq and prefix_sum[dq[-1]] >= curr_sum:
+            dq.pop()
+        dq.append(i)
+    
+    return min_len if min_len != float('inf') else -1
+
+
+The prefix sum stores the sum of nums[0] to nums[i-1], while the monotonic deque helps track potential subarrays. We define the prefix sum as [sum of nums from index 0 to i−1]. Afterwards, we utilize a deque to maintain an increasing order of prefix sums and to remove unnecessary elements to maintain a fairly short subarray.
+
+Complexity analysis:
+Prefix sums: O(n)
+Deque operations: O(n)
+Overall complexity: O(n)
+
+
+
+5) Uses Python. Min-heap algorithm.
+
+import heapq
+
+def kthSmallestPrimeFraction(arr, k):
+    min_heap = [(arr[i] / arr[-1], i, len(arr) - 1) for i in range(len(arr) - 1)]
+    heapq.heapify(min_heap)
+    
+    for _ in range(k):
+        val, i, j = heapq.heappop(min_heap)
+        if j - 1 > i:
+            heapq.heappush(min_heap, (arr[i] / arr[j - 1], i, j - 1))
+    
+    return [arr[i], arr[j]]
+
+
+This one is simple compared to the other. First, we use a min-heap init, where we push fractions fo the form arr[i] / arr[n-1] to store in the heap. Then we extract the k smallest elements, popping the smallest fraction from the heap and pushing the next fraction from the same row. We repeat this until the kth extraction.
+
+Heap init = O(n log n)
+k heap extractions = O(k log n)
+total complexity = O(n + k log n)
