@@ -1,0 +1,190 @@
+1) Uses Python. BFS to Remove Invalid Parentheses
+
+from collections import deque
+
+def removeInvalidParentheses(s):
+    def is_valid(string):
+        count = 0
+        for char in string:
+            if char == '(':
+                count += 1
+            elif char == ')':
+                count -= 1
+                if count < 0:
+                    return False
+        return count == 0
+
+    queue = deque([s])
+    visited = set([s])
+    results = []
+    found = False
+
+    while queue:
+        level_size = len(queue)
+        for _ in range(level_size):
+            current = queue.popleft()
+            if is_valid(current):
+                results.append(current)
+                found = True
+            if found:
+                continue  # stop going deeper if one level has valid result
+            for i in range(len(current)):
+                if current[i] not in ('(', ')'):
+                    continue
+                next_str = current[:i] + current[i+1:]
+                if next_str not in visited:
+                    visited.add(next_str)
+                    queue.append(next_str)
+        if found:
+            break
+
+    return results
+
+We perform BFS, removing one parenthesis at each level. We:
+- Check all possible one-char removals
+- Validate if current string has balanced parentheses
+- Stop when first level with valid strings is found (guarantees minimum removals)
+
+Time complexity:
+Each level removes a character. With max 20 parentheses, the worst-case total strings is exponential, but pruning (visited set + early stop) keeps it proper and concise.
+
+Time complexity: O(2^n)
+-----------------------------------------
+
+
+
+2) Uses Python. Inorder Traversal to Find Min Absolute Difference in BST
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def getMinimumDifference(root):
+    prev = None
+    min_diff = float('inf')
+
+    def inorder(node):
+        nonlocal prev, min_diff
+        if not node:
+            return
+        inorder(node.left)
+        if prev is not None:
+            min_diff = min(min_diff, node.val - prev)
+        prev = node.val
+        inorder(node.right)
+
+    inorder(root)
+    return min_diff
+
+We use an inorder traversal (LNR) to use the BST's sort:
+
+- Track prev node’s value during traversal
+- Compare each current node with prev to find min difference
+- This guarantees we're always comparing adjacent nodes in sorted order
+
+Time complexity:
+- Inorder traversal visits each node exactly once
+- Time: O(n), Space: O(h) where h is the height of the tree (recursion stack)
+-------------------------------------------------
+
+
+
+3) Uses Python. BFS + Bitmask for Shortest Path Visiting All Nodes
+
+from collections import deque
+
+def shortestPathLength(graph):
+    n = len(graph)
+    all_visited = (1 << n) - 1
+    queue = deque((i, 1 << i, 0) for i in range(n))  # (node, visited_mask, steps)
+    visited = set((i, 1 << i) for i in range(n))
+
+    while queue:
+        node, mask, steps = queue.popleft()
+        if mask == all_visited:
+            return steps
+        for nei in graph[node]:
+            next_mask = mask | (1 << nei)
+            if (nei, next_mask) not in visited:
+                visited.add((nei, next_mask))
+                queue.append((nei, next_mask, steps + 1))
+
+Steps:
+- We use BFS and represent visited nodes using bitmasks
+- Start BFS from each node
+- For every step, update visited_mask and move to connected nodes
+- Once all nodes are visited (i.e., visited_mask == (1 << n) - 1), return steps
+
+Time complexity:
+- Each state (node, visited mask) is visited once → O(n × 2ⁿ)
+- Time: O(n × 2^n), Space: O(n × 2^n)
+
+-------------------------------------------------
+
+
+4) Uses Python. DFS to Compute Binary Tree Maximum Path Sum
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def maxPathSum(root):
+    max_sum = float('-inf')
+
+    def max_gain(node):
+        nonlocal max_sum
+        if not node:
+            return 0
+        left = max(max_gain(node.left), 0)
+        right = max(max_gain(node.right), 0)
+        max_sum = max(max_sum, node.val + left + right)
+        return node.val + max(left, right)
+
+    max_gain(root)
+    return max_sum
+
+At each node, decide whether to:
+    -Start a new path through both left + right
+     -Continue a path through only one side
+- Recursively calculate maximum gain from left and right subtrees
+- Update global max_sum with max of current node + left + right
+
+Time complexity:
+- Each node visited once in post-order fashion
+- Time: O(n), Space: O(h) where h is the height
+
+-=--------------------------------------------------------------------------------
+
+
+5) Uses Python. DFS Lexical Traversal to Build Lexicographical Numbers
+
+def lexicalOrder(n):
+    result = []
+
+    def dfs(curr):
+        if curr > n:
+            return
+        result.append(curr)
+        for i in range(10):
+            next_num = curr * 10 + i
+            if next_num > n:
+                break
+            dfs(next_num)
+
+    for i in range(1, 10):
+        dfs(i)
+    return result
+
+Stepss:
+- Start from numbers 1 through 9
+- At each number, try multiplying by 10 and adding digits 0-9
+- Stop when the number exceeds n
+- This mimics a pre-order traversal of a 10-ary tree
+
+Time complexity:
+We touch each number exactly once
+Time: O(n), Space: O(1) excluding output
